@@ -1,5 +1,8 @@
-const STORAGE_KEY = 'unitClockData';
+const STORAGE_KEY = 'chronoTrackerData';
 const XP_PER_UNIT = 200; // 2,000 XP -> 100 tokens, 1,000 tokens -> 100 units => 200 XP per unit
+
+const RING_RADIUS = 104;
+const RING_CIRC = 2 * Math.PI * RING_RADIUS;
 
 const els = {
   // modal / setup
@@ -20,14 +23,18 @@ const els = {
   // header
   settingsBtn: document.getElementById('settingsBtn'),
 
-  // board
-  flapUnitsEarned: document.getElementById('flapUnitsEarned'),
-  flapUnitsTarget: document.getElementById('flapUnitsTarget'),
-  flapGamesLeft: document.getElementById('flapGamesLeft'),
-  flapTimeLeft: document.getElementById('flapTimeLeft'),
-  progressFill: document.getElementById('progressFill'),
-  progressLabel: document.getElementById('progressLabel'),
-  progressXp: document.getElementById('progressXp'),
+  // ring
+  ringProgress: document.getElementById('ringProgress'),
+  pctValue: document.getElementById('pctValue'),
+  unitsReadout: document.getElementById('unitsReadout'),
+
+  // stats
+  statGamesLogged: document.getElementById('statGamesLogged'),
+  statGamesToGo: document.getElementById('statGamesToGo'),
+  statTimeRemaining: document.getElementById('statTimeRemaining'),
+  statXp: document.getElementById('statXp'),
+  statTokens: document.getElementById('statTokens'),
+  statXpPerGame: document.getElementById('statXpPerGame'),
 
   // log section
   logGameBtn: document.getElementById('logGameBtn'),
@@ -37,10 +44,10 @@ const els = {
   customSubmit: document.getElementById('customSubmit'),
   undoBtn: document.getElementById('undoBtn'),
   historyNote: document.getElementById('historyNote'),
-  statXpPerGame: document.getElementById('statXpPerGame'),
-  statTokens: document.getElementById('statTokens'),
-  statGamesLogged: document.getElementById('statGamesLogged'),
 };
+
+els.ringProgress.style.strokeDasharray = RING_CIRC;
+els.ringProgress.style.strokeDashoffset = RING_CIRC;
 
 function loadData(){
   try{
@@ -62,16 +69,6 @@ function fmt1(n){
   return (Math.round(n * 10) / 10).toLocaleString('en-US');
 }
 
-// Update a flap value with a little flip animation, but only if it changed
-function setFlap(el, text){
-  if(el.textContent === text) return;
-  el.textContent = text;
-  el.classList.remove('flip');
-  // restart animation
-  void el.offsetWidth;
-  el.classList.add('flip');
-}
-
 function render(){
   if(!data) return;
 
@@ -79,7 +76,6 @@ function render(){
 
   const totalXpNeeded = targetUnits * XP_PER_UNIT;
   const currentXp = history.reduce((a, b) => a + b, 0);
-  const xpRemaining = Math.max(0, totalXpNeeded - currentXp);
 
   const gamesNeeded = Math.ceil(totalXpNeeded / xpPerGame);
   const gamesPlayed = history.length;
@@ -91,26 +87,24 @@ function render(){
 
   const pct = totalXpNeeded > 0 ? Math.min(1, currentXp / totalXpNeeded) : 0;
 
-  // board
-  setFlap(els.flapUnitsEarned, fmt1(unitsEarned));
-  setFlap(els.flapUnitsTarget, fmt(targetUnits));
-  setFlap(els.flapGamesLeft, fmt(gamesLeft));
+  // ring
+  els.ringProgress.style.strokeDashoffset = RING_CIRC * (1 - pct);
+  els.pctValue.textContent = Math.round(pct * 100) + '%';
+  els.unitsReadout.textContent = fmt1(unitsEarned) + ' / ' + fmt(targetUnits) + ' units';
+
+  // stats
+  els.statGamesLogged.textContent = fmt(gamesPlayed);
+  els.statGamesToGo.textContent = fmt(gamesLeft);
 
   if(timeLeftMin >= 60){
-    setFlap(els.flapTimeLeft, fmt1(timeLeftMin / 60) + 'h');
+    els.statTimeRemaining.textContent = fmt1(timeLeftMin / 60) + ' hrs';
   } else {
-    setFlap(els.flapTimeLeft, fmt(timeLeftMin) + 'm');
+    els.statTimeRemaining.textContent = fmt(timeLeftMin) + ' min';
   }
 
-  // progress
-  els.progressFill.style.width = (pct * 100) + '%';
-  els.progressLabel.textContent = Math.round(pct * 100) + '% to target';
-  els.progressXp.textContent = fmt(currentXp) + ' / ' + fmt(totalXpNeeded) + ' XP';
-
-  // mini stats
-  els.statXpPerGame.textContent = fmt(xpPerGame);
+  els.statXp.textContent = fmt(currentXp) + ' / ' + fmt(totalXpNeeded);
   els.statTokens.textContent = fmt(tokensEarned);
-  els.statGamesLogged.textContent = fmt(gamesPlayed);
+  els.statXpPerGame.textContent = fmt(xpPerGame);
 
   // history note
   if(gamesPlayed === 0){
@@ -130,7 +124,7 @@ function openModal(isFirstRun){
     els.modalTag.textContent = 'First time here?';
     els.modalTitle.textContent = "Hey — let's set up your run";
     els.modalLead.textContent =
-      "Give us your target units and your average grind, and Unit Clock will work out how many games you've got left.";
+      "Give us your target units and your average grind, and we'll work out how many games you've got left.";
     els.cancelSetup.classList.add('hidden');
     els.submitSetup.textContent = 'Calculate my run';
     els.targetUnits.value = '';
@@ -236,7 +230,6 @@ if(!data){
 } else {
   render();
 }
-
 
 console.log('Unit Clock loaded');
 console.log(` /$$   /$$ /$$   /$$ /$$$$$$ /$$$$$$$$ /$$$$$$ 
