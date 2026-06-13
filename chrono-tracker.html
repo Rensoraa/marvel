@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chrono Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #07060d;
+    --bg-glow-a: #2a1458;
+    --bg-glow-b: #07111a;
+    --surface: #13111e;
+    --surface-2: #1a172a;
+    --border: #2c2740;
+    --purple: #9163f5;
+    --purple-bright: #b794ff;
+    --teal: #36e0c4;
+    --gold: #ffc55c;
+    --text: #ece9f7;
+    --text-dim: #9c97b8;
+    --text-mute: #5d5876;
+    --radius: 18px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    padding:0;
+    min-height:100vh;
+  }
+
+  body{
+    font-family:'Inter', sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at 18% 12%, var(--bg-glow-a) 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, var(--bg-glow-b) 0%, transparent 50%),
+      var(--bg);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* faint star field */
+  body::before{
+    content:'';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.35) 0, transparent 60%),
+      radial-gradient(1px 1px at 70% 65%, rgba(255,255,255,0.25) 0, transparent 60%),
+      radial-gradient(1.5px 1.5px at 85% 20%, rgba(255,255,255,0.2) 0, transparent 60%),
+      radial-gradient(1px 1px at 45% 80%, rgba(255,255,255,0.3) 0, transparent 60%),
+      radial-gradient(1px 1px at 10% 90%, rgba(255,255,255,0.2) 0, transparent 60%);
+    background-size: 100% 100%;
+    opacity: 0.6;
+    z-index: 0;
+  }
+
+  .page{
+    position: relative;
+    z-index: 1;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* ---------- HEADER ---------- */
+  header.top{
+    display:flex;
+    align-items:flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 36px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+  }
+
+  .brand-mark{
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: conic-gradient(from 220deg, var(--purple), var(--teal), var(--purple));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow: 0 0 24px rgba(145, 99, 245, 0.45);
+    flex-shrink: 0;
+  }
+  .brand-mark svg{ width:24px; height:24px; }
+
+  .brand h1{
+    font-family:'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: 0.08em;
+    margin: 0;
+    line-height: 1.1;
+  }
+  .brand p{
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    letter-spacing: 0.03em;
+  }
+
+  .icon-btn{
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition: all 0.18s ease;
+    flex-shrink:0;
+  }
+  .icon-btn:hover{
+    color: var(--purple-bright);
+    border-color: var(--purple);
+    box-shadow: 0 0 0 4px rgba(145,99,245,0.08);
+  }
+  .icon-btn svg{ width:18px; height:18px; }
+
+  /* ---------- HERO / RING ---------- */
+  .hero{
+    background: linear-gradient(180deg, var(--surface) 0%, rgba(19,17,30,0.4) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px 28px;
+    display:flex;
+    flex-direction: column;
+    align-items:center;
+    gap: 18px;
+    text-align:center;
+    margin-bottom: 24px;
+    animation: fadeUp 0.7s ease both;
+    animation-delay: 0.05s;
+  }
+
+  .ring-wrap{
+    position: relative;
+    width: 240px;
+    height: 240px;
+  }
+
+  .ring-wrap svg{ width:100%; height:100%; transform: rotate(-90deg); }
+
+  .ring-track{
+    fill:none;
+    stroke: var(--surface-2);
+    stroke-width: 10;
+  }
+  .ring-progress{
+    fill:none;
+    stroke: url(#ringGradient);
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s cubic-bezier(.22,1,.36,1);
+    filter: drop-shadow(0 0 8px rgba(145,99,245,0.5));
+  }
+  .tick{
+    stroke: var(--text-mute);
+    stroke-width: 1;
+    opacity: 0.5;
+  }
+  .tick.major{ stroke: var(--text-dim); opacity: 0.8; }
+
+  .ring-center{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  .ring-center .pct{
+    font-family:'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 2.6rem;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--purple-bright), var(--teal));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .ring-center .pct-label{
+    margin-top: 6px;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .ring-center .units-readout{
+    margin-top: 14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  .ring-center .units-readout span{ color: var(--text-mute); }
+
+  .hero-title{
+    font-family:'Orbitron', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  /* ---------- STATS GRID ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 720px){
+    .grid{ grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 460px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .stat{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    animation: fadeUp 0.6s ease both;
+  }
+  .stat:nth-child(1){ animation-delay: 0.08s; }
+  .stat:nth-child(2){ animation-delay: 0.12s; }
+  .stat:nth-child(3){ animation-delay: 0.16s; }
+  .stat:nth-child(4){ animation-delay: 0.20s; }
+  .stat:nth-child(5){ animation-delay: 0.24s; }
+  .stat:nth-child(6){ animation-delay: 0.28s; }
+
+  .stat .label{
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    margin-bottom: 8px;
+  }
+  .stat .value{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .stat .value .unit{
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+  .stat.accent .value{ color: var(--teal); }
+  .stat.gold .value{ color: var(--gold); }
+
+  /* ---------- LOG PANEL ---------- */
+  .panel{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s ease both;
+    animation-delay: 0.3s;
+  }
+  .panel h2{
+    font-family:'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 0 0 16px;
+  }
+  .actions{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .btn{
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+  }
+  .btn-primary{
+    background: linear-gradient(135deg, var(--purple), #6d3ff0);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(145,99,245,0.35);
+  }
+  .btn-primary:hover{ transform: translateY(-1px); box-shadow: 0 8px 24px rgba(145,99,245,0.5); }
+  .btn-ghost{
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover{ color: var(--text); border-color: var(--purple); }
+  .btn-text{
+    background: transparent;
+    color: var(--text-mute);
+    padding: 12px 4px;
+  }
+  .btn-text:hover{ color: var(--purple-bright); }
+  .btn:disabled{ opacity:0.4; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+
+  .custom-row{
+    display:flex;
+    gap: 10px;
+    margin-top: 14px;
+    max-width: 360px;
+  }
+  .custom-row input{
+    flex: 1;
+  }
+  .hidden{ display:none !important; }
+
+  .history-note{
+    margin-top: 14px;
+    font-size: 0.8rem;
+    color: var(--text-mute);
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  /* ---------- EXCHANGE INFO ---------- */
+  .exchange{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    animation: fadeUp 0.6s ease both;
+    animation-delay: 0.36s;
+  }
+  .exchange h2{
+    font-family:'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 0 0 12px;
+  }
+  .exchange-row{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    flex-wrap: wrap;
+  }
+  .exchange-row b{ color: var(--text); }
+  .exchange-row .arrow{ color: var(--purple-bright); }
+  .exchange-divider{
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 12px 0;
+  }
+
+  /* ---------- MODAL ---------- */
+  .modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(5,4,10,0.72);
+    backdrop-filter: blur(6px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index: 50;
+    padding: 20px;
+    animation: fadeIn 0.25s ease both;
+  }
+  .modal{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    max-width: 440px;
+    width: 100%;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(145,99,245,0.12);
+    animation: popIn 0.35s cubic-bezier(.22,1,.36,1) both;
+  }
+  .modal-icon{
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: conic-gradient(from 220deg, var(--purple), var(--teal), var(--purple));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom: 16px;
+    box-shadow: 0 0 24px rgba(145, 99, 245, 0.4);
+  }
+  .modal-icon svg{ width:26px; height:26px; }
+  .modal h2{
+    font-family:'Orbitron', sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+    margin: 0 0 8px;
+  }
+  .modal p.lead{
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0 0 22px;
+  }
+
+  .field{ margin-bottom: 16px; }
+  .field label{
+    display:block;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    margin-bottom: 6px;
+  }
+  .field .hint{
+    font-size: 0.75rem;
+    color: var(--text-mute);
+    margin-top: 5px;
+  }
+
+  input[type="number"]{
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input[type="number"]:focus{
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px rgba(145,99,245,0.15);
+  }
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+  .modal-actions{
+    display:flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+  .modal-actions .btn{ flex:1; justify-content:center; }
+
+  .error-msg{
+    color: #ff8a8a;
+    font-size: 0.78rem;
+    margin-top: 4px;
+    display:none;
+  }
+
+  /* ---------- ANIMATIONS ---------- */
+  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+  @keyframes fadeDown{ from{opacity:0; transform:translateY(-12px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes popIn{ from{opacity:0; transform: scale(0.94) translateY(8px);} to{opacity:1; transform:scale(1) translateY(0);} }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+
+  footer{
+    text-align:center;
+    color: var(--text-mute);
+    font-size: 0.75rem;
+    margin-top: 28px;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="9" stroke="#0a0a16" stroke-width="2"/>
+          <path d="M12 7v5l3 2" stroke="#0a0a16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>CHRONO TRACKER</h1>
+        <p>Marvel Rivals &middot; Unit Goal Planner</p>
+      </div>
+    </div>
+    <button class="icon-btn" id="settingsBtn" title="Edit goal settings" aria-label="Edit settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 4.29l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </header>
+
+  <section class="hero">
+    <p class="hero-title">Path to your goal</p>
+    <div class="ring-wrap">
+      <svg viewBox="0 0 240 240">
+        <defs>
+          <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#9163f5"/>
+            <stop offset="100%" stop-color="#36e0c4"/>
+          </linearGradient>
+        </defs>
+        <g id="ticks"></g>
+        <circle class="ring-track" cx="120" cy="120" r="100"></circle>
+        <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="100"></circle>
+      </svg>
+      <div class="ring-center">
+        <div class="pct" id="pctValue">0%</div>
+        <div class="pct-label">to target</div>
+        <div class="units-readout" id="unitsReadout">0 <span>/</span> 0 units</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="stat">
+      <div class="label">Games Logged</div>
+      <div class="value" id="statGamesLogged">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">Games To Go</div>
+      <div class="value" id="statGamesToGo">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">Time Remaining</div>
+      <div class="value" id="statTimeRemaining">0<span class="unit">hrs</span></div>
+    </div>
+    <div class="stat accent">
+      <div class="label">XP Collected</div>
+      <div class="value" id="statXp">0<span class="unit">/ 0</span></div>
+    </div>
+    <div class="stat gold">
+      <div class="label">Chrono Tokens Earned</div>
+      <div class="value" id="statTokens">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">XP / Game (avg)</div>
+      <div class="value" id="statXpPerGame">0</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Log progress</h2>
+    <div class="actions">
+      <button class="btn btn-primary" id="logGameBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Log a Game
+      </button>
+      <button class="btn btn-ghost" id="customToggle">+ Custom XP</button>
+      <button class="btn btn-ghost" id="undoBtn">Undo Last</button>
+    </div>
+    <div class="custom-row hidden" id="customRow">
+      <input type="number" id="customXpInput" placeholder="XP earned this game" min="0">
+      <button class="btn btn-primary" id="customSubmit">Add</button>
+    </div>
+    <div class="history-note" id="historyNote">No games logged yet.</div>
+  </section>
+
+  <section class="exchange">
+    <h2>The Chrono-Rush Exchange</h2>
+    <div class="exchange-row">
+      <b>2,000 XP</b> <span class="arrow">&rarr;</span> <b>100 Chrono Tokens</b> <span style="color:var(--text-mute)">(per Chrono-Rush)</span>
+    </div>
+    <div class="exchange-divider"></div>
+    <div class="exchange-row">
+      <b>1,000 Chrono Tokens</b> <span class="arrow">&rarr;</span> <b>100 Units</b>
+    </div>
+    <div class="exchange-divider"></div>
+    <div class="exchange-row">
+      <span style="color:var(--text-mute)">Net rate:</span> <b style="color:var(--teal)">200 XP &rarr; 1 Unit</b>
+    </div>
+  </section>
+
+  <footer>Your goal data lives only in this browser &mdash; nothing leaves your device.</footer>
+</div>
+
+<!-- Setup Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="9" stroke="#0a0a16" stroke-width="2"/>
+        <path d="M12 7v5l3 2" stroke="#0a0a16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2 id="modalTitle">Hey, first time in the rift?</h2>
+    <p class="lead" id="modalLead">Tell us your goal and your average grind, and we'll chart exactly how many games stand between you and your units.</p>
+
+    <form id="setupForm">
+      <div class="field">
+        <label for="targetUnits">Target units</label>
+        <input type="number" id="targetUnits" min="1" step="1" placeholder="e.g. 1000" required>
+        <div class="error-msg" id="errUnits">Enter a number greater than 0.</div>
+      </div>
+      <div class="field">
+        <label for="avgGameTime">Average game time (minutes)</label>
+        <input type="number" id="avgGameTime" min="1" step="0.5" placeholder="e.g. 12" required>
+        <div class="error-msg" id="errTime">Enter a number greater than 0.</div>
+      </div>
+      <div class="field">
+        <label for="xpPerGame">XP earned per game (avg)</label>
+        <input type="number" id="xpPerGame" min="1" step="1" placeholder="e.g. 400" required>
+        <div class="hint">Tip: check your match summary screen for your typical XP gain.</div>
+        <div class="error-msg" id="errXp">Enter a number greater than 0.</div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost hidden" id="cancelSetup">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="submitSetup">Calculate my path</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'chronoTracker_data';
+  const XP_PER_UNIT = 200; // derived: 2000 XP -> 100 tokens, 1000 tokens -> 100 units => 200 XP per unit
+
+  const els = {
+    overlay: document.getElementById('modalOverlay'),
+    form: document.getElementById('setupForm'),
+    targetUnits: document.getElementById('targetUnits'),
+    avgGameTime: document.getElementById('avgGameTime'),
+    xpPerGame: document.getElementById('xpPerGame'),
+    errUnits: document.getElementById('errUnits'),
+    errTime: document.getElementById('errTime'),
+    errXp: document.getElementById('errXp'),
+    cancelSetup: document.getElementById('cancelSetup'),
+    modalTitle: document.getElementById('modalTitle'),
+    modalLead: document.getElementById('modalLead'),
+    submitSetup: document.getElementById('submitSetup'),
+
+    settingsBtn: document.getElementById('settingsBtn'),
+    logGameBtn: document.getElementById('logGameBtn'),
+    customToggle: document.getElementById('customToggle'),
+    customRow: document.getElementById('customRow'),
+    customXpInput: document.getElementById('customXpInput'),
+    customSubmit: document.getElementById('customSubmit'),
+    undoBtn: document.getElementById('undoBtn'),
+    historyNote: document.getElementById('historyNote'),
+
+    ringProgress: document.getElementById('ringProgress'),
+    pctValue: document.getElementById('pctValue'),
+    unitsReadout: document.getElementById('unitsReadout'),
+    ticks: document.getElementById('ticks'),
+
+    statGamesLogged: document.getElementById('statGamesLogged'),
+    statGamesToGo: document.getElementById('statGamesToGo'),
+    statTimeRemaining: document.getElementById('statTimeRemaining'),
+    statXp: document.getElementById('statXp'),
+    statTokens: document.getElementById('statTokens'),
+    statXpPerGame: document.getElementById('statXpPerGame'),
+  };
+
+  const RING_RADIUS = 100;
+  const RING_CIRC = 2 * Math.PI * RING_RADIUS;
+  els.ringProgress.style.strokeDasharray = RING_CIRC;
+  els.ringProgress.style.strokeDashoffset = RING_CIRC;
+
+  // build clock-style tick marks
+  (function buildTicks(){
+    const cx = 120, cy = 120;
+    for(let i=0;i<60;i++){
+      const angle = (i / 60) * 2 * Math.PI;
+      const major = i % 5 === 0;
+      const outer = 112;
+      const inner = major ? 106 : 109;
+      const x1 = cx + outer * Math.cos(angle);
+      const y1 = cy + outer * Math.sin(angle);
+      const x2 = cx + inner * Math.cos(angle);
+      const y2 = cy + inner * Math.sin(angle);
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', x1.toFixed(2));
+      line.setAttribute('y1', y1.toFixed(2));
+      line.setAttribute('x2', x2.toFixed(2));
+      line.setAttribute('y2', y2.toFixed(2));
+      line.setAttribute('class', 'tick' + (major ? ' major' : ''));
+      els.ticks.appendChild(line);
+    }
+  })();
+
+  function loadData(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function saveData(data){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  let data = loadData();
+
+  function fmt(n){
+    return Math.round(n).toLocaleString('en-US');
+  }
+  function fmt1(n){
+    return (Math.round(n*10)/10).toLocaleString('en-US');
+  }
+
+  function render(){
+    if(!data) return;
+    const { targetUnits, avgGameTime, xpPerGame, history } = data;
+    const totalXpNeeded = targetUnits * XP_PER_UNIT;
+    const currentXp = history.reduce((a,b)=>a+b, 0);
+    const xpRemaining = Math.max(0, totalXpNeeded - currentXp);
+    const gamesNeeded = Math.ceil(totalXpNeeded / xpPerGame);
+    const gamesPlayed = history.length;
+    const gamesToGo = Math.max(0, gamesNeeded - gamesPlayed);
+    const timeRemainingMin = gamesToGo * avgGameTime;
+    const unitsEarned = currentXp / XP_PER_UNIT;
+    const tokensEarned = Math.floor(currentXp / 20);
+
+    const pct = totalXpNeeded > 0 ? Math.min(1, currentXp / totalXpNeeded) : 0;
+    const offset = RING_CIRC * (1 - pct);
+    els.ringProgress.style.strokeDashoffset = offset;
+    els.pctValue.textContent = Math.round(pct * 100) + '%';
+    els.unitsReadout.innerHTML = fmt1(unitsEarned) + ' <span>/</span> ' + fmt(targetUnits) + ' units';
+
+    els.statGamesLogged.textContent = fmt(gamesPlayed);
+    els.statGamesToGo.textContent = fmt(gamesToGo);
+
+    const hrs = timeRemainingMin / 60;
+    if(hrs >= 1){
+      els.statTimeRemaining.innerHTML = fmt1(hrs) + '<span class="unit">hrs</span>';
+    } else {
+      els.statTimeRemaining.innerHTML = fmt(timeRemainingMin) + '<span class="unit">min</span>';
+    }
+
+    els.statXp.innerHTML = fmt(currentXp) + '<span class="unit">/ ' + fmt(totalXpNeeded) + '</span>';
+    els.statTokens.textContent = fmt(tokensEarned);
+    els.statXpPerGame.textContent = fmt(xpPerGame);
+
+    if(gamesPlayed === 0){
+      els.historyNote.textContent = 'No games logged yet.';
+    } else {
+      const last = history[history.length - 1];
+      els.historyNote.textContent = gamesPlayed + ' game' + (gamesPlayed===1?'':'s') + ' logged \u2014 last entry: +' + fmt(last) + ' XP';
+    }
+
+    els.undoBtn.disabled = gamesPlayed === 0;
+
+    if(pct >= 1){
+      els.pctValue.style.color = '';
+    }
+  }
+
+  function openModal({isFirstRun}){
+    if(isFirstRun){
+      els.modalTitle.textContent = "Hey, first time in the rift?";
+      els.modalLead.textContent = "Tell us your goal and your average grind, and we'll chart exactly how many games stand between you and your units.";
+      els.cancelSetup.classList.add('hidden');
+      els.submitSetup.textContent = 'Calculate my path';
+    } else {
+      els.modalTitle.textContent = "Update your goal";
+      els.modalLead.textContent = "Adjust your target or your averages \u2014 your logged progress stays put.";
+      els.cancelSetup.classList.remove('hidden');
+      els.submitSetup.textContent = 'Save changes';
+      if(data){
+        els.targetUnits.value = data.targetUnits;
+        els.avgGameTime.value = data.avgGameTime;
+        els.xpPerGame.value = data.xpPerGame;
+      }
+    }
+    els.overlay.classList.remove('hidden');
+    els.overlay.style.display = 'flex';
+  }
+  function closeModal(){
+    els.overlay.style.display = 'none';
+  }
+
+  function validateField(input, errEl){
+    const val = parseFloat(input.value);
+    const ok = !isNaN(val) && val > 0;
+    errEl.style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+
+  els.form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const okUnits = validateField(els.targetUnits, els.errUnits);
+    const okTime = validateField(els.avgGameTime, els.errTime);
+    const okXp = validateField(els.xpPerGame, els.errXp);
+    if(!okUnits || !okTime || !okXp) return;
+
+    const targetUnits = parseFloat(els.targetUnits.value);
+    const avgGameTime = parseFloat(els.avgGameTime.value);
+    const xpPerGame = parseFloat(els.xpPerGame.value);
+
+    if(!data){
+      data = { targetUnits, avgGameTime, xpPerGame, history: [] };
+    } else {
+      data.targetUnits = targetUnits;
+      data.avgGameTime = avgGameTime;
+      data.xpPerGame = xpPerGame;
+    }
+    saveData(data);
+    closeModal();
+    render();
+  });
+
+  els.cancelSetup.addEventListener('click', closeModal);
+  els.settingsBtn.addEventListener('click', function(){
+    openModal({isFirstRun: !data});
+  });
+
+  els.logGameBtn.addEventListener('click', function(){
+    if(!data) return;
+    data.history.push(data.xpPerGame);
+    saveData(data);
+    render();
+  });
+
+  els.customToggle.addEventListener('click', function(){
+    els.customRow.classList.toggle('hidden');
+    if(!els.customRow.classList.contains('hidden')){
+      els.customXpInput.focus();
+    }
+  });
+
+  els.customSubmit.addEventListener('click', function(){
+    if(!data) return;
+    const val = parseFloat(els.customXpInput.value);
+    if(isNaN(val) || val < 0) return;
+    data.history.push(val);
+    saveData(data);
+    els.customXpInput.value = '';
+    els.customRow.classList.add('hidden');
+    render();
+  });
+
+  els.customXpInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter') els.customSubmit.click();
+  });
+
+  els.undoBtn.addEventListener('click', function(){
+    if(!data || data.history.length === 0) return;
+    data.history.pop();
+    saveData(data);
+    render();
+  });
+
+  // init
+  if(!data){
+    openModal({isFirstRun: true});
+  } else {
+    render();
+  }
+</script>
+
+</body>
+</html>
