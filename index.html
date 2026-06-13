@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit Clock — Marvel Rivals Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page">
+
+  <header class="site-header">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="17" r="11" fill="#FFC14D"/>
+        <rect x="13" y="3" width="6" height="4" rx="1" fill="#F4ECE0"/>
+        <line x1="16" y1="17" x2="16" y2="10" stroke="#15130F" stroke-width="2" stroke-linecap="round"/>
+        <line x1="16" y1="17" x2="21" y2="19" stroke="#15130F" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <span class="brand-title">Unit Clock</span>
+        <span class="brand-sub">Marvel Rivals &middot; unit grind planner</span>
+      </div>
+    </div>
+    <button class="icon-btn" id="settingsBtn" aria-label="Edit your numbers" title="Edit your numbers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 4.29l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </header>
+
+  <section class="board-section">
+    <p class="eyebrow">Current run</p>
+
+    <div class="flap-grid">
+      <div class="flap-tile">
+        <span class="flap-label">Units earned</span>
+        <span class="flap-value" id="flapUnitsEarned">0</span>
+      </div>
+      <div class="flap-tile flap-tile--coral">
+        <span class="flap-label">Units target</span>
+        <span class="flap-value" id="flapUnitsTarget">0</span>
+      </div>
+      <div class="flap-tile">
+        <span class="flap-label">Games left</span>
+        <span class="flap-value" id="flapGamesLeft">0</span>
+      </div>
+      <div class="flap-tile flap-tile--coral">
+        <span class="flap-label">Time left</span>
+        <span class="flap-value" id="flapTimeLeft">0</span>
+      </div>
+    </div>
+
+    <div class="progress-block">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-meta">
+        <span id="progressLabel">0% to target</span>
+        <span id="progressXp">0 / 0 XP</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="log-section">
+    <div class="section-head">
+      <h2>Log a session</h2>
+      <p id="historyNote">No games logged yet.</p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="logGameBtn">+ Log a game</button>
+      <button class="btn btn-ghost" id="customToggle">Custom XP</button>
+      <button class="btn btn-ghost" id="undoBtn" disabled>Undo last</button>
+    </div>
+
+    <div class="custom-row hidden" id="customRow">
+      <input type="number" id="customXpInput" placeholder="XP earned this game" min="0">
+      <button class="btn btn-primary" id="customSubmit">Add</button>
+    </div>
+
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <span class="mini-label">XP / game (avg)</span>
+        <span class="mini-value" id="statXpPerGame">0</span>
+      </div>
+      <div class="mini-stat">
+        <span class="mini-label">Chrono tokens earned</span>
+        <span class="mini-value mini-value--amber" id="statTokens">0</span>
+      </div>
+      <div class="mini-stat">
+        <span class="mini-label">Games logged</span>
+        <span class="mini-value" id="statGamesLogged">0</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="exchange-section">
+    <h2>The exchange</h2>
+    <div class="ticket">
+      <div class="ticket-row">
+        <span class="ticket-left">2,000 XP</span>
+        <span class="ticket-arrow">→</span>
+        <span class="ticket-right">100 Chrono Tokens</span>
+        <span class="ticket-note">per Chrono-Rush</span>
+      </div>
+      <div class="ticket-row">
+        <span class="ticket-left">1,000 Chrono Tokens</span>
+        <span class="ticket-arrow">→</span>
+        <span class="ticket-right">100 Units</span>
+        <span class="ticket-note"></span>
+      </div>
+      <div class="ticket-row ticket-row--total">
+        <span class="ticket-left">Net rate</span>
+        <span class="ticket-arrow">→</span>
+        <span class="ticket-right ticket-right--amber">200 XP = 1 Unit</span>
+        <span class="ticket-note"></span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    Saved locally in this browser. Nothing is sent anywhere.
+  </footer>
+
+</div>
+
+<!-- Setup / settings modal -->
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <p class="ticket-tag" id="modalTag">First time here?</p>
+    <h2 id="modalTitle">Hey — let's set up your run</h2>
+    <p class="modal-lead" id="modalLead">
+      Give us your target units and your average grind, and Unit Clock will work out how many games you've got left.
+    </p>
+
+    <form id="setupForm">
+      <div class="field">
+        <label for="targetUnits">Target units</label>
+        <input type="number" id="targetUnits" min="1" step="1" placeholder="e.g. 1000" required>
+        <p class="error-msg" id="errUnits">Enter a number greater than 0.</p>
+      </div>
+      <div class="field">
+        <label for="avgGameTime">Average game time (minutes)</label>
+        <input type="number" id="avgGameTime" min="1" step="0.5" placeholder="e.g. 12" required>
+        <p class="error-msg" id="errTime">Enter a number greater than 0.</p>
+      </div>
+      <div class="field">
+        <label for="xpPerGame">XP per game (avg)</label>
+        <input type="number" id="xpPerGame" min="1" step="1" placeholder="e.g. 400" required>
+        <p class="field-hint">Check your post-match summary for your usual XP gain.</p>
+        <p class="error-msg" id="errXp">Enter a number greater than 0.</p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost hidden" id="cancelSetup">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="submitSetup">Calculate my run</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="scripts.js"></script>
+</body>
+</html>
